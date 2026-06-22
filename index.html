@@ -1,0 +1,785 @@
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio Vectorial 3D - Versión Pro</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; font-family: Arial, sans-serif; }
+        body { background: #000; display: flex; flex-direction: row-reverse; }
+        
+        .layout { display: flex; flex-direction: row-reverse; width: 100%; height: 100vh; }
+        
+        #canvas { flex: 1; display: block; background: #000; }
+        
+        .panel { 
+            width: 420px; background: #0a0f1e; border-right: 3px solid #00d4ff;
+            overflow-y: auto; padding: 0;
+            box-shadow: 5px 0 20px rgba(0, 0, 0, 0.8);
+            display: flex; flex-direction: column;
+        }
+        
+        .panel-header {
+            background: linear-gradient(90deg, #0099ff, #00d4ff);
+            color: #000; padding: 18px; font-weight: bold; font-size: 15px;
+            text-align: center; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tabs {
+            display: flex; gap: 2px; background: #1a2545; padding: 8px;
+            position: sticky; top: 60px; z-index: 99; flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            flex: 1; min-width: 80px; padding: 10px 6px; border: none; background: transparent;
+            color: #00d4ff; cursor: pointer; font-weight: bold; font-size: 11px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        
+        .tab-btn:hover { background: rgba(0, 150, 200, 0.2); }
+        .tab-btn.active { color: #00ff88; border-bottom-color: #00ff88; background: rgba(0, 255, 136, 0.1); }
+        
+        .content { padding: 18px; display: none; flex: 1; overflow-y: auto; }
+        .content.active { display: block; }
+        
+        .title { color: #00d4ff; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1.5px; }
+        
+        .example-item {
+            padding: 12px; background: #1a2545; border: 2px solid #0099ff;
+            border-radius: 6px; margin-bottom: 10px; cursor: pointer; color: #00d4ff;
+            font-weight: bold; font-size: 12px; text-align: left; transition: all 0.3s;
+        }
+        
+        .example-item:hover { 
+            transform: translateX(-5px); border-color: #00ff88; 
+            background: rgba(0, 150, 200, 0.3);
+        }
+        
+        .example-item.active { 
+            background: #00ff88; color: #000; border-color: #00ff88; 
+        }
+        
+        .control { margin-bottom: 18px; }
+        .label { color: #00d4ff; font-size: 11px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .value { color: #00ff88; font-size: 10px; font-family: monospace; }
+        
+        input[type="range"] {
+            width: 100%; height: 6px; background: #333; border: none;
+            border-radius: 3px; outline: none; -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+            background: #00ff88; cursor: pointer; box-shadow: 0 0 8px #00ff88;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 16px; height: 16px; border-radius: 50%; background: #00ff88;
+            cursor: pointer; border: none;
+        }
+        
+        input[type="text"], input[type="number"] {
+            width: 100%; padding: 10px; margin-bottom: 8px; background: #1a2545;
+            border: 2px solid #0099ff; border-radius: 4px; color: #00ff88;
+            font-family: monospace; font-size: 11px;
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none; border-color: #00d4ff; 
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+        }
+        
+        .btn {
+            width: 100%; padding: 11px; border: none; border-radius: 6px;
+            cursor: pointer; font-weight: bold; font-size: 12px; margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(90deg, #00ff88, #00d4ff); 
+            color: #000;
+        }
+        
+        .btn-primary:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 150, 0, 0.3); color: #ff9900; border: 2px solid #ff9900;
+        }
+        
+        .btn-secondary:hover { 
+            background: rgba(255, 150, 0, 0.5); 
+        }
+        
+        .box {
+            background: #1a2545; border: 2px solid #0099ff; border-radius: 6px;
+            padding: 12px; margin-bottom: 10px; color: #bbb; font-size: 11px;
+            line-height: 1.6;
+        }
+        
+        .message { 
+            padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 11px;
+        }
+        
+        .success { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+        .error { background: rgba(255, 0, 102, 0.2); color: #ff0066; }
+        
+        .stars { font-size: 20px; margin-top: 10px; }
+        
+        .charts-panel {
+            position: fixed; right: 20px; bottom: 20px; width: 320px; max-height: 280px;
+            background: rgba(10, 15, 30, 0.98); border: 2px solid #00d4ff;
+            border-radius: 8px; padding: 15px; z-index: 50;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+        }
+        
+        .charts-title { color: #00ff88; font-size: 12px; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; }
+        
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .chart-mini { width: 90px; height: 90px; background: #0a0f1e; border: 1px solid #0099ff; border-radius: 4px; }
+        
+        .stats {
+            position: fixed; top: 20px; right: 20px;
+            background: rgba(10, 15, 30, 0.95); border: 2px solid #ff0066;
+            border-radius: 8px; padding: 15px; font-family: monospace; font-size: 11px;
+            color: #ff0066; z-index: 50;
+        }
+        
+        .stat-label { color: #00d4ff; }
+        .stat-val { color: #00ff88; }
+        .stat-line { margin-bottom: 6px; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #0099ff; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00d4ff; }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <canvas id="canvas"></canvas>
+        
+        <div class="panel">
+            <div class="panel-header">⚡ LABORATORIO VECTORIAL PRO</div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="0">Explorar</button>
+                <button class="tab-btn" data-tab="1">Construir</button>
+                <button class="tab-btn" data-tab="2">Interpreta</button>
+                <button class="tab-btn" data-tab="3">Comprende</button>
+                <button class="tab-btn" data-tab="4">Analiza</button>
+                <button class="tab-btn" data-tab="5">Desafíos</button>
+                <button class="tab-btn" data-tab="6">🎮 Juega</button>
+            </div>
+            
+            <div class="content active" id="content-0">
+                <div class="title">📊 Ejemplos</div>
+                <div id="examples-container"></div>
+                
+                <div class="control" style="margin-top: 20px;">
+                    <div class="label">Velocidad: <span class="value" id="speed-val">1.0x</span></div>
+                    <input type="range" id="speed-slider" min="0.1" max="3" step="0.1" value="1">
+                </div>
+                
+                <button class="btn btn-primary" id="play-btn">⏸ PAUSAR</button>
+            </div>
+            
+            <div class="content" id="content-1">
+                <div class="title">⚙️ Tu Función</div>
+                
+                <div class="control">
+                    <div class="label">🔴 X(t)</div>
+                    <input type="text" id="inp-x" placeholder="ej: 2*cos(t)" value="t">
+                </div>
+                
+                <div class="control">
+                    <div class="label">🟢 Y(t)</div>
+                    <input type="text" id="inp-y" placeholder="ej: 2*sin(t)" value="sin(t)">
+                </div>
+                
+                <div class="control">
+                    <div class="label">🔵 Z(t)</div>
+                    <input type="text" id="inp-z" placeholder="ej: t/5" value="cos(t)">
+                </div>
+                
+                <div class="control">
+                    <div class="label">Rango máximo</div>
+                    <input type="number" id="inp-tmax" value="6.28" step="0.1">
+                </div>
+                
+                <button class="btn btn-primary" onclick="buildCustom()">VISUALIZAR</button>
+                <div id="build-message"></div>
+                
+                <div style="margin-top: 15px;">
+                    <div class="title">📤 Exportar</div>
+                    <button class="btn btn-secondary" onclick="exportPNG()">📸 PNG</button>
+                    <button class="btn btn-secondary" onclick="exportCSV()">📊 CSV</button>
+                </div>
+            </div>
+            
+            <div class="content" id="content-2">
+                <div class="title">💡 Interpreta</div>
+                
+                <div class="box">
+                    <strong style="color: #00d4ff;">Función:</strong>
+                    <div id="interp-func" style="color: #00ff88; font-family: monospace; margin-top: 6px; font-size: 10px;">r(t) = ⟨?, ?, ?⟩</div>
+                </div>
+                
+                <div style="background: #1a2545; border-left: 3px solid #00ff88; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
+                    <div style="color: #00ff88; font-weight: bold; margin-bottom: 6px; font-size: 11px;">🔴 X(t)</div>
+                    <div style="color: #00d4ff; font-family: monospace; margin-bottom: 6px; font-size: 10px;" id="interp-x-expr">t</div>
+                    <div style="color: #bbb; font-size: 10px;" id="interp-x-meaning">-</div>
+                </div>
+                
+                <div style="background: #1a2545; border-left: 3px solid #00ff88; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
+                    <div style="color: #00ff88; font-weight: bold; margin-bottom: 6px; font-size: 11px;">🟢 Y(t)</div>
+                    <div style="color: #00d4ff; font-family: monospace; margin-bottom: 6px; font-size: 10px;" id="interp-y-expr">sin(t)</div>
+                    <div style="color: #bbb; font-size: 10px;" id="interp-y-meaning">-</div>
+                </div>
+                
+                <div style="background: #1a2545; border-left: 3px solid #00ff88; padding: 10px; border-radius: 6px;">
+                    <div style="color: #00ff88; font-weight: bold; margin-bottom: 6px; font-size: 11px;">🔵 Z(t)</div>
+                    <div style="color: #00d4ff; font-family: monospace; margin-bottom: 6px; font-size: 10px;" id="interp-z-expr">cos(t)</div>
+                    <div style="color: #bbb; font-size: 10px;" id="interp-z-meaning">-</div>
+                </div>
+            </div>
+            
+            <div class="content" id="content-3">
+                <div class="title">📊 Comprende</div>
+                <div style="color: #00d4ff; font-size: 10px; margin-bottom: 10px;">Gráficas 2D mostradas abajo →</div>
+                <div id="comp-analysis" style="background: #1a2545; border: 1px solid #0099ff; border-radius: 6px; padding: 12px; font-size: 10px; color: #bbb; line-height: 1.6;"></div>
+            </div>
+            
+            <div class="content" id="content-4">
+                <div class="title">🔬 Analiza</div>
+                
+                <div class="box" style="border-color: #00ff88;">
+                    <div style="color: #00ff88; font-weight: bold; margin-bottom: 6px;">Velocidad ||v||</div>
+                    <div style="color: #00d4ff; font-family: monospace; font-size: 11px;" id="anal-vel">0.000</div>
+                </div>
+                
+                <div class="box" style="border-color: #00d4ff;">
+                    <div style="color: #00d4ff; font-weight: bold; margin-bottom: 6px;">Aceleración ||a||</div>
+                    <div style="color: #00ff88; font-family: monospace; font-size: 11px;" id="anal-acl">0.000</div>
+                </div>
+                
+                <div class="box" style="border-color: #ff9900;">
+                    <div style="color: #ff9900; font-weight: bold; margin-bottom: 6px;">Curvatura κ</div>
+                    <div style="color: #00ff88; font-family: monospace; font-size: 11px;" id="anal-curv">0.000</div>
+                </div>
+                
+                <div class="box" style="border-color: #ff0066;">
+                    <div style="color: #ff0066; font-weight: bold; margin-bottom: 6px;">Longitud de Arco</div>
+                    <div style="color: #00ff88; font-family: monospace; font-size: 11px;" id="anal-arc">0.00</div>
+                </div>
+            </div>
+            
+            <div class="content" id="content-5">
+                <div class="title">🎯 Desafíos</div>
+                <div id="challenges-container"></div>
+            </div>
+            
+            <div class="content" id="content-6">
+                <div class="title">🎮 JUEGA: Adivina</div>
+                
+                <div class="box">
+                    Se muestra una trayectoria misteriosa. ¿Puedes crear la función?
+                </div>
+                
+                <button class="btn btn-primary" onclick="loadAdivina()" style="background: linear-gradient(90deg, #ff00ff, #ff0099); margin-bottom: 12px;">🎲 NUEVA RONDA</button>
+                
+                <div style="margin-bottom: 12px;">
+                    <div class="label">X(t)</div>
+                    <input type="text" id="adiv-x" placeholder="x(t)">
+                </div>
+                
+                <div style="margin-bottom: 12px;">
+                    <div class="label">Y(t)</div>
+                    <input type="text" id="adiv-y" placeholder="y(t)">
+                </div>
+                
+                <div style="margin-bottom: 12px;">
+                    <div class="label">Z(t)</div>
+                    <input type="text" id="adiv-z" placeholder="z(t)">
+                </div>
+                
+                <button class="btn btn-primary" onclick="checkAdivina()" style="margin-bottom: 12px;">VERIFICAR</button>
+                <div id="adivina-result"></div>
+                <div class="stars" id="adivina-stars"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats">
+        <div class="stat-line"><span class="stat-label">VEL:</span> <span class="stat-val" id="stat-vel">0.000</span></div>
+        <div class="stat-line"><span class="stat-label">POS:</span> <span class="stat-val" id="stat-pos">(0,0,0)</span></div>
+        <div class="stat-line"><span class="stat-label">t:</span> <span class="stat-val" id="stat-t">0.00</span></div>
+    </div>
+    
+    <div class="charts-panel">
+        <div class="charts-title">📊 Componentes 2D</div>
+        <div class="chart-row">
+            <div class="chart-mini" title="X(t)"><canvas id="chart-x" style="width: 100%; height: 100%;"></canvas></div>
+            <div class="chart-mini" title="Y(t)"><canvas id="chart-y" style="width: 100%; height: 100%;"></canvas></div>
+            <div class="chart-mini" title="Z(t)"><canvas id="chart-z" style="width: 100%; height: 100%;"></canvas></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+    <script>
+        const examples = [
+            { name: 'Drone Espiral', x: '2*t*cos(t)', y: '2*t*sin(t)', z: '0.3*t', tmax: 3*Math.PI, color: 0x00ff88 },
+            { name: 'Onda EM', x: 't', y: '2*sin(5*t)', z: '2*cos(5*t)', tmax: 4*Math.PI, color: 0x0099ff },
+            { name: 'Red 5G', x: 'cos(t)+0.5*cos(3*t)', y: 'sin(t)+0.5*sin(3*t)', z: '0.3*sin(4*t)', tmax: 2*Math.PI, color: 0xff00ff },
+            { name: 'Robot Móvil', x: '0.5*t', y: '2*sin(2*t)', z: '0.5*t*cos(t)', tmax: 4*Math.PI, color: 0xff9900 },
+        ];
+
+        const challenges = [
+            { title: '📡 Sube en Espiral', desc: 'Función que suba mientras rota', hint: 'cos/sin para rotación, t para subir', validate: (x,y,z) => { try { return Math.abs(evalFunc(z, Math.PI) - evalFunc(z, 0) - Math.PI) < 1; } catch { return false; } } },
+            { title: '🤖 Línea Recta', desc: 'Navega (0,0,0) → (5,0,0)', hint: 'X aumenta, Y=Z=0', validate: (x,y,z) => { try { return Math.abs(evalFunc(y, 2)) < 0.5 && Math.abs(evalFunc(z, 2)) < 0.5; } catch { return false; } } },
+            { title: '📊 Onda Pura', desc: 'Oscila en Y, avanza en X', hint: 'X=t, Y=sin(t), Z=0', validate: (x,y,z) => { try { return Math.abs(evalFunc(z, 1)) < 0.1; } catch { return false; } } }
+        ];
+
+        const adivinaQuestions = [
+            { x: 'cos(t)', y: 'sin(t)', z: '0', tmax: 2*Math.PI },
+            { x: 't', y: 't^2', z: '0', tmax: 3 },
+            { x: 'cos(t)', y: 'sin(t)', z: 't/5', tmax: 4*Math.PI },
+        ];
+
+        let scene, camera, renderer, curve, velocityArrow;
+        let currentExample = examples[0];
+        let animTime = 0, isPlaying = true, speed = 1;
+        let currentAdivina = null;
+
+        function evalFunc(expr, t) {
+            try {
+                if (!expr) return 0;
+                return math.evaluate(expr, {
+                    t, sin: Math.sin, cos: Math.cos, tan: Math.tan,
+                    exp: Math.exp, log: Math.log, sqrt: Math.sqrt, abs: Math.abs,
+                    pi: Math.PI, e: Math.E
+                });
+            } catch { return 0; }
+        }
+
+        function initScene() {
+            const canvas = document.getElementById('canvas');
+            const w = canvas.clientWidth, h = canvas.clientHeight;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+            camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 10000);
+            camera.position.set(25, 18, 25);
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(w, h);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            const gridPoints = [];
+            for (let i = -50; i <= 50; i += 5) {
+                gridPoints.push(new THREE.Vector3(i, -8, -50), new THREE.Vector3(i, -8, 50));
+                gridPoints.push(new THREE.Vector3(-50, -8, i), new THREE.Vector3(50, -8, i));
+            }
+            const gridGeo = new THREE.BufferGeometry().setFromPoints(gridPoints);
+            scene.add(new THREE.LineSegments(gridGeo, new THREE.LineBasicMaterial({ color: 0x003366 })));
+
+            scene.add(new THREE.AxesHelper(15));
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const light = new THREE.DirectionalLight(0xffffff, 0.8);
+            light.position.set(30, 40, 30);
+            scene.add(light);
+
+            animate();
+        }
+
+        function drawCurve() {
+            if (curve) scene.remove(curve);
+
+            const points = [];
+            for (let i = 0; i <= 600; i++) {
+                const t = (currentExample.tmax / 600) * i;
+                const x = evalFunc(currentExample.x, t);
+                const y = evalFunc(currentExample.y, t);
+                const z = evalFunc(currentExample.z, t);
+
+                if (!isNaN(x) && !isNaN(y) && !isNaN(z) && 
+                    Math.abs(x) < 100 && Math.abs(y) < 100 && Math.abs(z) < 100) {
+                    points.push(new THREE.Vector3(x, z, y));
+                }
+            }
+
+            if (points.length > 1) {
+                const geo = new THREE.BufferGeometry().setFromPoints(points);
+                const mat = new THREE.LineBasicMaterial({ color: currentExample.color, linewidth: 3 });
+                curve = new THREE.Line(geo, mat);
+                scene.add(curve);
+            }
+            
+            updateInterpreta();
+            updateComprende();
+            updateAnaliza();
+        }
+
+        function updateAnimation() {
+            if (!isPlaying) return;
+
+            animTime = (animTime + 0.002 * speed) % 1;
+
+            const t = animTime * currentExample.tmax;
+            const x = evalFunc(currentExample.x, t);
+            const y = evalFunc(currentExample.z, t);
+            const z = evalFunc(currentExample.y, t);
+
+            const dt = 0.001;
+            const t2 = Math.min(t + dt, currentExample.tmax);
+            const x2 = evalFunc(currentExample.x, t2);
+            const y2 = evalFunc(currentExample.z, t2);
+            const z2 = evalFunc(currentExample.y, t2);
+
+            const vx = (x2 - x) / dt;
+            const vy = (y2 - y) / dt;
+            const vz = (z2 - z) / dt;
+            const velMag = Math.sqrt(vx*vx + vy*vy + vz*vz);
+
+            if (velocityArrow) scene.remove(velocityArrow);
+            const arrowLen = Math.min(velMag / 5, 3);
+            const arrowGeo = new THREE.ConeGeometry(0.3, arrowLen, 8);
+            const arrowCol = new THREE.Color().setHSL(0.3 + velMag / 10, 1, 0.5);
+            const arrowMat = new THREE.MeshBasicMaterial({ color: arrowCol });
+            velocityArrow = new THREE.Mesh(arrowGeo, arrowMat);
+            velocityArrow.position.set(x, y, z);
+            velocityArrow.lookAt(x + vx, y + vy, z + vz);
+            scene.add(velocityArrow);
+
+            document.getElementById('stat-vel').textContent = velMag.toFixed(3);
+            document.getElementById('stat-pos').textContent = `(${x.toFixed(0)},${y.toFixed(0)},${z.toFixed(0)})`;
+            document.getElementById('stat-t').textContent = t.toFixed(2);
+
+            camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.0002);
+            camera.lookAt(0, 0, 0);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updateAnimation();
+            renderer.render(scene, camera);
+        }
+
+        function loadExample(i) {
+            currentExample = examples[i];
+            animTime = 0;
+            document.querySelectorAll('.example-item').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.example-item')[i].classList.add('active');
+            drawCurve();
+        }
+
+        function buildCustom() {
+            const x = document.getElementById('inp-x').value;
+            const y = document.getElementById('inp-y').value;
+            const z = document.getElementById('inp-z').value;
+            const tmax = parseFloat(document.getElementById('inp-tmax').value) || 6.28;
+
+            if (!x || !y || !z) {
+                document.getElementById('build-message').innerHTML = '<div class="message error">⚠️ Completa todos</div>';
+                return;
+            }
+
+            try {
+                evalFunc(x, 0); evalFunc(y, 0); evalFunc(z, 0);
+                currentExample = { name: 'Personalizada', x, y, z, tmax, color: 0xff00ff };
+                animTime = 0;
+                document.getElementById('build-message').innerHTML = '<div class="message success">✅ Cargada!</div>';
+                drawCurve();
+                setTimeout(() => { document.getElementById('build-message').innerHTML = ''; }, 2000);
+            } catch (e) {
+                document.getElementById('build-message').innerHTML = '<div class="message error">❌ Error</div>';
+            }
+        }
+
+        function updateInterpreta() {
+            document.getElementById('interp-func').textContent = `r(t) = ⟨${currentExample.x}, ${currentExample.y}, ${currentExample.z}⟩`;
+            document.getElementById('interp-x-expr').textContent = currentExample.x;
+            document.getElementById('interp-y-expr').textContent = currentExample.y;
+            document.getElementById('interp-z-expr').textContent = currentExample.z;
+
+            const getMeaning = (expr) => {
+                if (expr === 't') return '✓ Lineal: avanza uniformemente';
+                if (expr.includes('sin')) return '⟿ Oscila: sube/baja periódicamente';
+                if (expr.includes('cos')) return '⟿ Oscila (desfasada)';
+                if (expr.includes('exp(')) return '📈 Exponencial: crece rápido';
+                if (expr.includes('exp(-')) return '📉 Decaimiento: desaparece';
+                if (expr.includes('sqrt')) return '√ Raíz: crece lento';
+                return '⚙️ Personalizada';
+            };
+
+            document.getElementById('interp-x-meaning').textContent = getMeaning(currentExample.x);
+            document.getElementById('interp-y-meaning').textContent = getMeaning(currentExample.y);
+            document.getElementById('interp-z-meaning').textContent = getMeaning(currentExample.z);
+        }
+
+        function updateComprende() {
+            const tVals = [], xVals = [], yVals = [], zVals = [];
+            for (let i = 0; i <= 20; i++) {
+                const t = (currentExample.tmax / 20) * i;
+                tVals.push(t.toFixed(1));
+                xVals.push(evalFunc(currentExample.x, t));
+                yVals.push(evalFunc(currentExample.y, t));
+                zVals.push(evalFunc(currentExample.z, t));
+            }
+
+            updateMiniChart('chart-x', tVals, xVals, '#00ff88');
+            updateMiniChart('chart-y', tVals, yVals, '#00d4ff');
+            updateMiniChart('chart-z', tVals, zVals, '#ff0066');
+
+            const xMax = Math.max(...xVals), yMax = Math.max(...yVals), zMax = Math.max(...zVals);
+            document.getElementById('comp-analysis').innerHTML = 
+                `<strong style="color: #00ff88;">Máximos:</strong><br>X: ${xMax.toFixed(2)} | Y: ${yMax.toFixed(2)} | Z: ${zMax.toFixed(2)}`;
+        }
+
+        function updateMiniChart(id, labels, data, color) {
+            const canvas = document.getElementById(id);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            if (window[id + '_chart']) window[id + '_chart'].destroy();
+
+            window[id + '_chart'] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color + '30',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { display: false }, y: { display: false } }
+                }
+            });
+        }
+
+        function updateAnaliza() {
+            const t0 = 0.1;
+            const dt = 0.001;
+
+            const x = evalFunc(currentExample.x, t0);
+            const y = evalFunc(currentExample.y, t0);
+            const z = evalFunc(currentExample.z, t0);
+
+            const t1 = Math.min(t0 + dt, currentExample.tmax);
+            const x1 = evalFunc(currentExample.x, t1);
+            const y1 = evalFunc(currentExample.y, t1);
+            const z1 = evalFunc(currentExample.z, t1);
+
+            const vx = (x1 - x) / dt;
+            const vy = (y1 - y) / dt;
+            const vz = (z1 - z) / dt;
+            const velMag = Math.sqrt(vx*vx + vy*vy + vz*vz);
+
+            const t2 = Math.min(t0 + 2*dt, currentExample.tmax);
+            const x2 = evalFunc(currentExample.x, t2);
+            const y2 = evalFunc(currentExample.y, t2);
+            const z2 = evalFunc(currentExample.z, t2);
+
+            const vx2 = (x2 - x1) / dt;
+            const vy2 = (y2 - y1) / dt;
+            const vz2 = (z2 - z1) / dt;
+
+            const ax = (vx2 - vx) / dt;
+            const ay = (vy2 - vy) / dt;
+            const az = (vz2 - vz) / dt;
+            const aclMag = Math.sqrt(ax*ax + ay*ay + az*az);
+
+            const cross = { x: vy * az - vz * ay, y: vz * ax - vx * az, z: vx * ay - vy * ax };
+            const crossMag = Math.sqrt(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z);
+            const curvature = velMag > 0.01 ? crossMag / Math.pow(velMag, 3) : 0;
+
+            let arcLength = 0;
+            let prevX = evalFunc(currentExample.x, 0);
+            let prevY = evalFunc(currentExample.y, 0);
+            let prevZ = evalFunc(currentExample.z, 0);
+
+            for (let i = 1; i <= 50; i++) {
+                const t = (currentExample.tmax / 50) * i;
+                const cx = evalFunc(currentExample.x, t);
+                const cy = evalFunc(currentExample.y, t);
+                const cz = evalFunc(currentExample.z, t);
+                const dx = cx - prevX, dy = cy - prevY, dz = cz - prevZ;
+                arcLength += Math.sqrt(dx*dx + dy*dy + dz*dz);
+                prevX = cx; prevY = cy; prevZ = cz;
+            }
+
+            document.getElementById('anal-vel').textContent = velMag.toFixed(3) + ' u/s';
+            document.getElementById('anal-acl').textContent = aclMag.toFixed(3) + ' u/s²';
+            document.getElementById('anal-curv').textContent = curvature.toFixed(4);
+            document.getElementById('anal-arc').textContent = arcLength.toFixed(2) + ' u';
+        }
+
+        function exportPNG() {
+            html2canvas(renderer.domElement).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL();
+                link.download = 'trayectoria.png';
+                link.click();
+            });
+        }
+
+        function exportCSV() {
+            let csv = 't,x,y,z,velocidad\n';
+            for (let i = 0; i <= 100; i++) {
+                const t = (currentExample.tmax / 100) * i;
+                const x = evalFunc(currentExample.x, t);
+                const y = evalFunc(currentExample.y, t);
+                const z = evalFunc(currentExample.z, t);
+                const dt = 0.001;
+                const x2 = evalFunc(currentExample.x, t + dt);
+                const y2 = evalFunc(currentExample.y, t + dt);
+                const z2 = evalFunc(currentExample.z, t + dt);
+                const vel = Math.sqrt((x2-x)**2 + (y2-y)**2 + (z2-z)**2) / dt;
+                csv += `${t.toFixed(2)},${x.toFixed(3)},${y.toFixed(3)},${z.toFixed(3)},${vel.toFixed(3)}\n`;
+            }
+            const link = document.createElement('a');
+            link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+            link.download = 'trayectoria.csv';
+            link.click();
+        }
+
+        function loadAdivina() {
+            currentAdivina = adivinaQuestions[Math.floor(Math.random() * adivinaQuestions.length)];
+            currentExample = { name: 'Misterio', x: currentAdivina.x, y: currentAdivina.y, z: currentAdivina.z, tmax: currentAdivina.tmax, color: 0xff00ff };
+            animTime = 0;
+            drawCurve();
+            document.getElementById('adivina-result').innerHTML = '';
+            document.getElementById('adivina-stars').innerHTML = '';
+        }
+
+        function checkAdivina() {
+            const x = document.getElementById('adiv-x').value;
+            const y = document.getElementById('adiv-y').value;
+            const z = document.getElementById('adiv-z').value;
+
+            if (!x || !y || !z) return;
+
+            try {
+                let sim = 0;
+                for (let i = 0; i <= 10; i++) {
+                    const t = i;
+                    const cx = evalFunc(currentAdivina.x, t);
+                    const cy = evalFunc(currentAdivina.y, t);
+                    const cz = evalFunc(currentAdivina.z, t);
+                    const yx = evalFunc(x, t);
+                    const yy = evalFunc(y, t);
+                    const yz = evalFunc(z, t);
+                    const dist = Math.sqrt((cx - yx)**2 + (cy - yy)**2 + (cz - yz)**2);
+                    sim += Math.max(0, 1 - dist / 10);
+                }
+                sim = sim / 11;
+
+                let stars = Math.round(sim * 3);
+                if (stars > 3) stars = 3;
+
+                const msg = sim > 0.8 ? '✅ ¡Excelente!' : sim > 0.6 ? '⚠️ Cercano' : '❌ Intenta';
+                const css = sim > 0.6 ? 'success' : 'error';
+                document.getElementById('adivina-result').innerHTML = 
+                    `<div class="message ${css}">${msg} (${(sim * 100).toFixed(0)}%)</div>`;
+                document.getElementById('adivina-stars').innerHTML = 
+                    '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+            } catch (e) {
+                document.getElementById('adivina-result').innerHTML = '<div class="message error">❌ Error</div>';
+            }
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.getAttribute('data-tab');
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('content-' + tab).classList.add('active');
+            });
+        });
+
+        const exContainer = document.getElementById('examples-container');
+        examples.forEach((ex, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'example-item' + (i === 0 ? ' active' : '');
+            btn.textContent = ex.name;
+            btn.onclick = () => loadExample(i);
+            exContainer.appendChild(btn);
+        });
+
+        const chContainer = document.getElementById('challenges-container');
+        challenges.forEach((ch, i) => {
+            const card = document.createElement('div');
+            card.className = 'box';
+            card.style.background = 'linear-gradient(135deg, rgba(255, 150, 0, 0.15), rgba(255, 100, 0, 0.1))';
+            card.style.borderColor = '#ff9900';
+            card.innerHTML = `
+                <div style="color: #ff9900; font-weight: bold; margin-bottom: 6px; font-size: 11px;">${ch.title}</div>
+                <div style="color: #ccc; margin-bottom: 6px; font-size: 10px;">${ch.desc}</div>
+                <div style="color: #888; font-size: 9px; margin-bottom: 8px;">💡 ${ch.hint}</div>
+                <div style="display: flex; gap: 4px; margin-bottom: 6px;">
+                    <input type="text" placeholder="x" style="flex: 1; padding: 6px; font-size: 10px;" id="ch-x-${i}">
+                    <input type="text" placeholder="y" style="flex: 1; padding: 6px; font-size: 10px;" id="ch-y-${i}">
+                    <input type="text" placeholder="z" style="flex: 1; padding: 6px; font-size: 10px;" id="ch-z-${i}">
+                </div>
+                <button class="btn btn-primary" style="font-size: 10px; padding: 6px;" onclick="checkChallenge(${i})">OK</button>
+                <div id="ch-result-${i}" style="margin-top: 4px;"></div>
+            `;
+            chContainer.appendChild(card);
+        });
+
+        window.checkChallenge = (i) => {
+            const x = document.getElementById(`ch-x-${i}`).value;
+            const y = document.getElementById(`ch-y-${i}`).value;
+            const z = document.getElementById(`ch-z-${i}`).value;
+
+            if (challenges[i].validate(x, y, z)) {
+                document.getElementById(`ch-result-${i}`).innerHTML = 
+                    '<div class="message success" style="font-size: 10px;">✅ ¡Correcto! ⭐⭐⭐</div>';
+            } else {
+                document.getElementById(`ch-result-${i}`).innerHTML = 
+                    '<div class="message error" style="font-size: 10px;">❌ Intenta de nuevo</div>';
+            }
+        };
+
+        document.getElementById('speed-slider').oninput = (e) => {
+            speed = parseFloat(e.target.value);
+            document.getElementById('speed-val').textContent = speed.toFixed(1) + 'x';
+        };
+
+        document.getElementById('play-btn').onclick = function() {
+            isPlaying = !isPlaying;
+            this.textContent = isPlaying ? '⏸ PAUSAR' : '▶ PLAY';
+        };
+
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('canvas');
+            const w = canvas.clientWidth, h = canvas.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        });
+
+        initScene();
+        drawCurve();
+        loadAdivina();
+    </script>
+</body>
+</html>
